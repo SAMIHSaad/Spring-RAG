@@ -1,8 +1,9 @@
 package ma.emsi.samih.springrag.telegram;
 
-
 import jakarta.annotation.PostConstruct;
 import ma.emsi.samih.springrag.agents.AIAgent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -16,6 +17,8 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
 @Component
 public class TelegramBot extends TelegramLongPollingBot {
+    private static final Logger logger = LoggerFactory.getLogger(TelegramBot.class);
+    
     @Value("${telegram.api.key}")
     private String telegramBotToken;
     private AIAgent aiAgent;
@@ -36,20 +39,34 @@ public class TelegramBot extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update telegraRequest) {
         try {
-            if(!telegraRequest.hasMessage()) return;
+            if(!telegraRequest.hasMessage()) {
+                logger.debug("Update has no message");
+                return;
+            }
             String messageText = telegraRequest.getMessage().getText();
             Long chatId = telegraRequest.getMessage().getChatId();
+            logger.info("Received message from chat {}: {}", chatId, messageText);
+            
             sendTypingQuestion(chatId);
             String answer = aiAgent.askAgent(messageText);
-            sendTextMessage(chatId, answer);
+            logger.info("Generated answer: {}", answer);
+            
+            if (answer == null || answer.isEmpty()) {
+                logger.warn("Answer is null or empty");
+                sendTextMessage(chatId, "Je n'ai pas pu générer une réponse");
+            } else {
+                sendTextMessage(chatId, answer);
+            }
         } catch (TelegramApiException e) {
-            throw new RuntimeException(e);
+            logger.error("Telegram API error", e);
+        } catch (Exception e) {
+            logger.error("Error processing update", e);
         }
     }
 
     @Override
     public String getBotUsername() {
-        return "ENSETAIBot";
+        return "SaadSAMIH23_bot";
     }
 
     @Override
