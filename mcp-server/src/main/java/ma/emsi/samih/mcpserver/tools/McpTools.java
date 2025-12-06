@@ -12,7 +12,10 @@ public class McpTools {
     @McpTool(name = "getEmployee",
             description = "Get information about a given employee")
     public Employee getEmployee(@McpArg(description = "The employee name") String name) {
-        return new Employee(name, 12300, 4);
+        return getAllEmployees().stream()
+                .filter(employee -> employee.name().equalsIgnoreCase(name))
+                .findFirst()
+                .orElse(null);
     }
     @McpTool(description = "Get All Employees")
     public List<Employee> getAllEmployees() {
@@ -24,4 +27,3 @@ public class McpTools {
     }
 }
  record Employee(String name, double salary, int seniority){}
-
